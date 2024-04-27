@@ -27,7 +27,12 @@ char* err_token = 0;
 
 %%
 [ \r\t]s*                          {}
-[1-9][0-9]*|0               { TAKE_ERROR_TOKEN; yylval.ival = atoi(yytext); DBG(NUMBER);}
+[1-9][0-9]*|0               { TAKE_ERROR_TOKEN; yylval.ival = atoi(yytext); 
+                                if (yylval.ival < 0 || yylval.ival > 2147483647) {
+                                    printf("%s outside legal integer range on line: %d", err_token, line_num);
+                                    exit(-1);
+                                } 
+                                DBG(NUMBER); }
 false|true                  { TAKE_ERROR_TOKEN; yylval.bval = strcmp("true", yytext) == 0; DBG(BOOLLIT); }
 [A-Z][A-Z0-9]*              { TAKE_ERROR_TOKEN; yylval.sval = strdup(yytext); DBG(IDENT);}
 "("                         { TAKE_ERROR_TOKEN; yylval.sval = strdup(yytext); DBG(LP);}

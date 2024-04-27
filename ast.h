@@ -3,6 +3,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
+#include "./uthash/include/uthash.h"
+
+
+
+#ifndef DEBUG
+    #define DEBUG 1
+#endif
 
 typedef char bool;
 
@@ -33,18 +41,55 @@ typedef enum {
     TYPE,
     STATEMENT_SEQUENCE,
     STATEMENT,
-    ASSIGNMENT,
     IF_BLOCK,
     ELSE_CLAUSE,
     WHILE_BLOCK,
     WRITE_INT,
+    AST_COUNT,
 } ASTNodeType;
 
+static const char* node_type_to_str(ASTNodeType ast_type){
+    if (ast_type >= AST_COUNT) return "";
+    static const char* ssss[] = {"FT_IDENT",
+        "FT_NUMBER",
+        "FT_BOOLLIT",
+        "FT_PARENTH_EXPR",
+        "TT_BINARY",
+        "TT_FACTOR",
+        "SE_TERM",
+        "SE_BINARY_EXPR",
+        "ET_SIMPLE",
+        "ET_BINARY",
+        "AT_EXPRESSION",
+        "AT_READINT",
+        "ST_ASSIGN",
+        "ST_IFBLOCK",
+        "ST_WHILEBLOCK",
+        "ST_WRITEINT",
+        "DT_DECLARATION",
+        "TYPE",
+        "STATEMENT_SEQUENCE",
+        "STATEMENT",
+        "IF_BLOCK",
+        "ELSE_CLAUSE",
+        "WHILE_BLOCK",
+        "WRITE_INT"};
+    return ssss[ast_type];
+} 
 
 typedef enum DataType {
     DT_INT,
     DT_BOOL,
 } DataType;
+
+static const char* datatype_as_str(DataType d) {
+    static const char* ds_strs[] = {
+        "int",
+        "bool",
+    };
+
+    return ds_strs[d];
+}
 
 typedef struct Type {
     DataType datatype;
@@ -83,6 +128,55 @@ typedef enum OperationType {
     OP_LESS_EQ,
     OP_GREATER_EQ,
 }OperationType;
+
+const char* op_to_str(OperationType o) {
+    static const char* ops[] = 
+    {
+        "OP_PLUS",
+        "OP_MINUS",
+        "OP_MUL",
+        "OP_DIV",
+        "OP_MOD",
+        "OP_EQ",
+        "OP_NEQ",
+        "OP_LESS",
+        "OP_GREATER",
+        "OP_LESS_EQ",
+        "OP_GREATER_EQ",
+    };
+
+    return ops[o];
+}
+
+// convert from the OperationType to the corresponding character 
+const char* op_to_symbol(OperationType o) {
+
+    switch(o) {
+        case OP_PLUS:
+			return "+";
+        case OP_MINUS:
+			return "-";
+        case OP_MUL:
+			return "*";
+        case OP_DIV:
+			return "/";
+        case OP_MOD:
+			return "%";
+        case OP_EQ:
+			return "==";
+        case OP_NEQ:
+			return "!=";
+        case OP_LESS:
+			return "<";
+        case OP_GREATER:
+			return ">";
+        case OP_LESS_EQ:
+			return "<=";
+        case OP_GREATER_EQ:
+			return ">=";
+    }
+
+}
 
 typedef struct Term {
     struct ASTNode* factor1;
@@ -282,17 +376,17 @@ ASTNode* ast_make_binary_expression(ASTNode* simple_expression1, const char* op4
 
     // figure out op type
     OperationType op4;
-    if (strcmp(op4_lexeme, "=")) {
+    if (!strcmp(op4_lexeme, "=")) {
         op4 = OP_EQ;
-    } else if(strcmp(op4_lexeme, "!=")) {
+    } else if(!strcmp(op4_lexeme, "!=")) {
         op4 = OP_NEQ;
-    } else if(strcmp(op4_lexeme, "<")) {
+    } else if(!strcmp(op4_lexeme, "<")) {
         op4 = OP_LESS;
-    } else if (strcmp(op4_lexeme, ">")) {
+    } else if (!strcmp(op4_lexeme, ">")) {
         op4 = OP_GREATER;
-    } else if (strcmp(op4_lexeme, "<=")) {
+    } else if (!strcmp(op4_lexeme, "<=")) {
         op4 = OP_LESS_EQ;
-    } else if (strcmp(op4_lexeme, ">=")) {
+    } else if (!strcmp(op4_lexeme, ">=")) {
         op4 = OP_GREATER_EQ;
     } else {
         printf("invalid op4: %s", op4_lexeme);
@@ -310,9 +404,9 @@ ASTNode* ast_make_binary_simple_expression(ASTNode* term1, const char* op3_lexem
     
     // figure out op type
     OperationType op3;
-    if (strcmp(op3_lexeme, "+")) {
+    if (!strcmp(op3_lexeme, "+")) {
         op3 = OP_PLUS;
-    } else if(strcmp(op3_lexeme, "-")) {
+    } else if(!strcmp(op3_lexeme, "-")) {
         op3 = OP_MINUS;
     }
 
@@ -332,11 +426,11 @@ ASTNode* ast_make_binary_term(ASTNode* factor1, const char* op2_lexeme, ASTNode*
     snode->term.factor2 = factor2;
 
     OperationType op2;
-    if (strcmp(op2_lexeme, "*")) {
+    if (!strcmp(op2_lexeme, "*")) {
         op2 = OP_MUL;
-    } else if(strcmp(op2_lexeme, "/")) {
+    } else if(!strcmp(op2_lexeme, "/")) {
         op2 = OP_DIV;
-    } else if (strcmp(op2_lexeme, "%")) {
+    } else if (!strcmp(op2_lexeme, "%")) {
         op2 = OP_MOD;
     }
     snode->term.op2 = op2;
@@ -373,4 +467,281 @@ ASTNode* ast_make_factor_parenth_expr(ASTNode* expr) {
     return snode;
 }
 
+
+
+typedef struct _SymbolEntry {
+    char symbol_name[32]; // hashtable key
+    DataType data_type;
+    UT_hash_handle hh; /// makes the structure hashable 
+} SymbolEntry;
+
+// global symbol table
+SymbolEntry* g_symbols = 0;
+
+// 
+void sym_add(const char* symbol_name, DataType dt) {
+    SymbolEntry* entry = (SymbolEntry*)malloc(sizeof(SymbolEntry));
+    strcpy(entry->symbol_name, symbol_name);
+    entry->data_type = dt;
+    HASH_ADD_STR(g_symbols, symbol_name, entry);
+}
+
+SymbolEntry* sym_lookup(const char* key) {
+    SymbolEntry *e = 0;
+    HASH_FIND_STR(g_symbols, key, e);
+    return e;
+}
+
+
+typedef struct TranspilerOutput {
+    FILE* out_file;
+    const char* out_file_path;
+
+} TranspilerOutput;
+ 
+TranspilerOutput tp_create(const char* out_file_path) {
+    TranspilerOutput t;
+    t.out_file = fopen(out_file_path, "w+");
+    t.out_file_path = strdup(out_file_path);
+    return t;
+}
+
+void tp_destroy(TranspilerOutput* t) {
+    if (t->out_file) {
+        fclose(t->out_file);
+    }
+    free((void*)t->out_file_path);
+}
+
+
+#if DEBUG == 0
+#define TP_WRITE(TP, ...) \ 
+{\ 
+    fprintf(TP.out_file, __VA_ARGS__);\ 
+}
+#endif
+
+#if DEBUG == 1
+    #define TP_WRITE(TP, ...) {\ 
+        fprintf(TP.out_file, __VA_ARGS__); \
+        fflush(TP.out_file); \
+        printf(__VA_ARGS__); \
+    }
+#endif
+
+// support up to 31 tab depth
+const char* tabs(int tab_depth) {
+    char *t = malloc(32);
+    memset(t, 0, 32);
+    if (tab_depth < 32) {
+        memset((void*)t, '\t', tab_depth);
+    }
+    return t;
+}
+
+
+char* fmt(const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    char* s = (char*)malloc(1024); 
+    vsprintf(s, fmt, args);
+    va_end(args);
+    return s;
+}
+
+void ast_print_debug(ASTNode* s, int depth) {
+    if (!s) return;
+    printf("%s\n%s", node_type_to_str(s->kind), tabs(depth));
+    switch(s->kind) {
+		case FT_IDENT:
+            printf("%s", (char*)s->factor.ident);
+        	break;
+		case FT_NUMBER:
+            printf("%d", s->factor.number);
+        	break;
+		case FT_BOOLLIT:
+            printf("%s", s->factor.bool_lit?"true":"false");
+        	break;
+		case FT_PARENTH_EXPR:
+            ast_print_debug(s->factor.expr, depth+1);
+        	break;
+		case TT_BINARY:
+            ast_print_debug(s->term.factor1, depth+1);
+            printf(" OP2(%s)", op_to_symbol(s->term.op2)); 
+            ast_print_debug( s->term.factor2, depth+1);
+        	break;
+		case TT_FACTOR:
+            ast_print_debug( s->term.factor1, depth+1);
+        	break;
+		case SE_TERM:
+            ast_print_debug( s->simple_expression.term1, depth+1);
+        	break;
+		case SE_BINARY_EXPR:
+            ast_print_debug( s->simple_expression.term1, depth+1);
+            printf(" OP3(%s)",  op_to_symbol(s->simple_expression.op3));
+            ast_print_debug( s->simple_expression.term2, depth+1);
+        	break;
+		case ET_SIMPLE:
+            ast_print_debug(s->expression.expr1, depth+1);
+        	break;
+		case ET_BINARY:
+            ast_print_debug( s->expression.expr1, depth+1);
+            printf(" OP4(%s)", op_to_symbol(s->expression.op4));
+            ast_print_debug( s->expression.expr2, depth+1);
+        	break;
+		case AT_EXPRESSION:
+            printf("ident(%s) \n", s->assignment.ident);
+            ast_print_debug( s->assignment.expr, depth+1);
+        	break;
+		case AT_READINT:
+            printf("ident(%s) \n", s->assignment.ident);
+        	break;
+		case ST_ASSIGN:
+            ast_print_debug( s->statement.asgn, depth+1);
+        	break;
+		case ST_IFBLOCK:
+            ast_print_debug( s->statement.ifblock, depth+1);
+        	break;
+		case ST_WHILEBLOCK:
+            ast_print_debug(s->statement.while_block, depth+1);
+        	break;
+		case ST_WRITEINT:
+            ast_print_debug( s->statement.writeInt, depth+1);
+        	break;
+		case IF_BLOCK:
+            ast_print_debug( s->if_block.expr, depth+1); 
+            ast_print_debug( s->if_block.statement_sequence, depth+1);
+        	break;
+		case ELSE_CLAUSE:
+            ast_print_debug( s->else_block.statements, depth+1);
+        	break;
+		case WHILE_BLOCK:
+            ast_print_debug( s->while_block.expr, depth+1); 
+            ast_print_debug( s->while_block.statements, depth+1); 
+        	break;
+		case WRITE_INT:
+            ast_print_debug( s->write_int.expr, depth+1);
+        	break;
+		case STATEMENT_SEQUENCE:
+            ASTNode* current_statement = s;
+            while(current_statement){
+                ast_print_debug( current_statement->statement_sequence.statement, depth+1);
+                current_statement = current_statement->statement_sequence.next;
+            }
+        break;
+    }
+}
+
+
+
+char* gen(ASTNode* stmts, int tab_depth) {
+
+    ASTNode* s = stmts;
+    if (!s) return "";
+    printf("generating kind: %s\n", node_type_to_str(s->kind));
+    switch(s->kind) {
+        case FT_IDENT:
+            if (!sym_lookup(s->factor.ident)) {
+                printf("Use of undeclared variable: %s", s->factor.ident);
+                exit(-1);
+            }
+            return (char*)s->factor.ident;
+        case FT_NUMBER:
+            return fmt("%d", s->factor.number);
+        case FT_BOOLLIT:
+            return fmt("%s", s->factor.bool_lit?"true":"false");
+        case FT_PARENTH_EXPR:
+            return fmt("(%s)", gen(s->factor.expr, 0));
+        case TT_BINARY:
+            return fmt("%s %s %s", gen(s->term.factor1, 0), op_to_symbol(s->term.op2), gen( s->term.factor2, 0));
+        case TT_FACTOR:
+            return fmt("%s", gen( s->term.factor1, 0));
+        case SE_TERM:
+            return fmt("%s", gen( s->simple_expression.term1, 0));
+        case SE_BINARY_EXPR:
+            return fmt("%s %s %s",gen( s->simple_expression.term1, 0), op_to_symbol(s->simple_expression.op3), gen( s->simple_expression.term2, 0)); case ET_SIMPLE: return fmt("%s", gen(s->expression.expr1, 0));
+        case ET_BINARY:
+            return fmt("%s %s %s", gen( s->expression.expr1, 0), op_to_symbol(s->expression.op4), gen( s->expression.expr2, 0));
+        case AT_EXPRESSION:
+            if (!sym_lookup(s->assignment.ident)) {
+                printf("Use of undeclared variable: %s", s->factor.ident);
+                exit(-1);
+            }
+            return fmt("%s = %s;", s->assignment.ident, gen( s->assignment.expr, 0));
+        case AT_READINT:
+            if (!sym_lookup(s->assignment.ident)) {
+                printf("Use of undeclared variable: %s", s->factor.ident);
+                exit(-1);
+            }
+            return fmt("scanf(\"%%d\", &%s);\n", s->assignment.ident);
+        case ST_ASSIGN:
+            return fmt("%s%s", tabs(tab_depth), gen(s->statement.asgn, tab_depth));
+        case ST_IFBLOCK:
+            return fmt("%s%s", tabs(tab_depth), gen( s->statement.ifblock, tab_depth));
+        case ST_WHILEBLOCK:
+            return fmt("%s%s", tabs(tab_depth), gen(s->statement.while_block, tab_depth));
+        case ST_WRITEINT:
+            return fmt("%s%s", tabs(tab_depth), gen( s->statement.writeInt, tab_depth));
+        case IF_BLOCK:
+            return fmt("if (%s) {\n%s%s}", gen( s->if_block.expr, 0), gen( s->if_block.statement_sequence, tab_depth+1), tabs(tab_depth));
+        case ELSE_CLAUSE:
+            return fmt("%s", gen( s->else_block.statements, tab_depth+1));
+        case WHILE_BLOCK:
+            return fmt("while (%s) {\n%s%s}", gen( s->while_block.expr, 0), gen( s->while_block.statements, tab_depth+1), tabs(tab_depth));
+        case WRITE_INT:
+            return fmt("printf(\"%%d\", %s);", gen( s->write_int.expr, 0));
+        case STATEMENT_SEQUENCE:
+            char* f = (char*)"";
+            ASTNode* current_statement = s;
+            while(current_statement != 0){
+                f = fmt("%s%s\n", f, gen( current_statement->statement_sequence.statement, tab_depth));
+                current_statement = current_statement->statement_sequence.next;
+            }
+            return f;
+        default: 
+            return "unkn";
+    }
+}
+
+
+int ast_generate_code(ASTNode* declarations, ASTNode* statement_sequence) {
+
+#if 0
+    printf("==============\n");
+    ast_print_debug(statement_sequence, 0);
+    return 1;
+#endif 
+
+
+    TranspilerOutput t = tp_create("test.c");
+
+    TP_WRITE(t, "#include <stdio.h>\n");
+    TP_WRITE(t, "#include <stdlib.h>\n");
+    TP_WRITE(t, "typedef char bool;\n");
+
+    TP_WRITE(t, "int main() {\n");
+
+    // traverse declarations
+    ASTNode* current_decl = declarations;
+    while(current_decl) {
+        sym_add(current_decl->declaration.ident, current_decl->declaration.datatype);
+        TP_WRITE(t,"\t%s %s;\n", datatype_as_str(current_decl->declaration.datatype), current_decl->declaration.ident);
+        current_decl = current_decl->declaration.next;
+    }
+
+    // test the hashtable 
+    #if 0
+    SymbolEntry* e;
+    if ((e = sym_lookup("BIGGER"))) {
+        printf("found symbol entry for %s: %s\n", e->symbol_name, datatype_as_str(e->data_type));
+    }
+    #endif
+
+    // traverse statements
+    char* statements = gen(statement_sequence, 1);
+    TP_WRITE(t, "%s", statements);
+    TP_WRITE(t, "}");
+
+    return 1;
+}
 #endif

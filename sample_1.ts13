@@ -1,0 +1,11 @@
+{ This is a program }
+program(test);
+var
+K,Z,D : INTEGER;
+begin
+{
+This is a multiline comment within a block.
+Note case insensitive variable usage!
+}
+k:=1; z:=3; d:=5;
+end.

@@ -79,8 +79,16 @@ void yyerror(const char* s);
 extern int line_num;
 extern char* err_token;
 
+#define TRACE_AST 1
 
-#line 84 "tl13.tab.c"
+#if TRACE_AST == 1
+    #define TRACE(where) printf("%s\n", where);
+#else
+    #define TRACE(where) 
+#endif
+
+
+#line 92 "tl13.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -538,10 +546,10 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int8 yyrline[] =
 {
-       0,    30,    30,    30,    39,    39,    44,    45,    47,    47,
-      51,    52,    53,    54,    56,    59,    63,    67,    67,    72,
-      76,    80,    81,    85,    86,    88,    89,    91,    92,    93,
-      94
+       0,    38,    38,    38,    46,    47,    53,    54,    56,    56,
+      61,    62,    63,    64,    66,    70,    75,    80,    80,    86,
+      91,    96,    97,   102,   103,   105,   106,   108,   109,   111,
+     112
 };
 #endif
 
@@ -1134,183 +1142,204 @@ yyreduce:
   switch (yyn)
     {
   case 3: /* program: PROGRAM declarations MYBEGIN statementSequence END  */
-#line 30 "tl13.y"
+#line 38 "tl13.y"
                                                               {
-        ASTNode* current_decl = (yyvsp[-3].node);
-        while(current_decl) {
-            printf("%d %s\n", current_decl->declaration.datatype, current_decl->declaration.ident);
-            current_decl = current_decl->declaration.next;
+        if (ast_generate_code((yyvsp[-3].node), (yyvsp[-1].node))) {
+            printf("\nSuccess!\n");
+        } else {
+            printf("\nThere was an error\n");
         }
-        printf("\nSuccess!\n");
     }
-#line 1147 "tl13.tab.c"
+#line 1154 "tl13.tab.c"
+    break;
+
+  case 4: /* declarations: %empty  */
+#line 46 "tl13.y"
+              { TRACE("declarations_Empty"); }
+#line 1160 "tl13.tab.c"
     break;
 
   case 5: /* declarations: VAR IDENT AS type SC declarations  */
-#line 40 "tl13.y"
+#line 48 "tl13.y"
     {
+        TRACE("declarations");
         (yyval.node) = ast_make_declaration((yyvsp[-4].sval), (yyvsp[-2].node), (yyvsp[0].node));
     }
-#line 1155 "tl13.tab.c"
+#line 1169 "tl13.tab.c"
     break;
 
   case 6: /* type: INT  */
-#line 44 "tl13.y"
-          { (yyval.node) = ast_make_type(DT_INT); }
-#line 1161 "tl13.tab.c"
-    break;
-
-  case 7: /* type: BOOL  */
-#line 45 "tl13.y"
-           { (yyval.node) = ast_make_type(DT_BOOL); }
-#line 1167 "tl13.tab.c"
-    break;
-
-  case 9: /* statementSequence: statement SC statementSequence  */
-#line 47 "tl13.y"
-                                                    { 
-                 (yyval.node) = ast_make_statement_seq((yyvsp[-2].node), (yyvsp[0].node));
-                 }
+#line 53 "tl13.y"
+          { (yyval.node) = ast_make_type(DT_INT); TRACE("type int"); }
 #line 1175 "tl13.tab.c"
     break;
 
-  case 10: /* statement: assignment  */
-#line 51 "tl13.y"
-                      {         (yyval.node) = ast_make_statement(ST_ASSIGN, (yyvsp[0].node)); }
+  case 7: /* type: BOOL  */
+#line 54 "tl13.y"
+           { (yyval.node) = ast_make_type(DT_BOOL); TRACE("type int"); }
 #line 1181 "tl13.tab.c"
     break;
 
-  case 11: /* statement: ifStatement  */
-#line 52 "tl13.y"
-                       {        (yyval.node) = ast_make_statement(ST_IFBLOCK, (yyvsp[0].node)); }
+  case 8: /* statementSequence: %empty  */
+#line 56 "tl13.y"
+                   { TRACE("statementSequence_Empty");(yyval.node) = ast_make_statement_seq(0, 0); }
 #line 1187 "tl13.tab.c"
     break;
 
+  case 9: /* statementSequence: statement SC statementSequence  */
+#line 56 "tl13.y"
+                                                                                                                            { 
+                (yyval.node) = ast_make_statement_seq((yyvsp[-2].node), (yyvsp[0].node));
+                TRACE("StatementSequence");
+                 }
+#line 1196 "tl13.tab.c"
+    break;
+
+  case 10: /* statement: assignment  */
+#line 61 "tl13.y"
+                      {      TRACE("statement_Assignment");   (yyval.node) = ast_make_statement(ST_ASSIGN, (yyvsp[0].node)); }
+#line 1202 "tl13.tab.c"
+    break;
+
+  case 11: /* statement: ifStatement  */
+#line 62 "tl13.y"
+                       {     TRACE("statement_IfStatement");   (yyval.node) = ast_make_statement(ST_IFBLOCK, (yyvsp[0].node)); }
+#line 1208 "tl13.tab.c"
+    break;
+
   case 12: /* statement: whileStatement  */
-#line 53 "tl13.y"
-                          {     (yyval.node) = ast_make_statement(ST_WHILEBLOCK, (yyvsp[0].node)); }
-#line 1193 "tl13.tab.c"
+#line 63 "tl13.y"
+                          {  TRACE("statement_WhileStatement");   (yyval.node) = ast_make_statement(ST_WHILEBLOCK, (yyvsp[0].node)); }
+#line 1214 "tl13.tab.c"
     break;
 
   case 13: /* statement: writeInt  */
-#line 54 "tl13.y"
-                    {           (yyval.node) = ast_make_statement(ST_WRITEINT, (yyvsp[0].node)); }
-#line 1199 "tl13.tab.c"
+#line 64 "tl13.y"
+                    {        TRACE("statement_WriteInt");   (yyval.node) = ast_make_statement(ST_WRITEINT, (yyvsp[0].node)); }
+#line 1220 "tl13.tab.c"
     break;
 
   case 14: /* assignment: IDENT ASGN expression  */
-#line 56 "tl13.y"
+#line 66 "tl13.y"
                                   { 
-              (yyval.node) = ast_make_assignment_expression((yyvsp[-2].sval), (yyvsp[0].node));
-          }
-#line 1207 "tl13.tab.c"
+        TRACE("assignment_Expression");
+        (yyval.node) = ast_make_assignment_expression((yyvsp[-2].sval), (yyvsp[0].node));
+      }
+#line 1229 "tl13.tab.c"
     break;
 
   case 15: /* assignment: IDENT ASGN READINT  */
-#line 59 "tl13.y"
+#line 70 "tl13.y"
                                { 
+                TRACE("assignment_ReadInt");
               (yyval.node) = ast_make_assignment_readint((yyvsp[-2].sval));
           }
-#line 1215 "tl13.tab.c"
+#line 1238 "tl13.tab.c"
     break;
 
   case 16: /* ifStatement: IF expression THEN statementSequence elseClause END  */
-#line 63 "tl13.y"
+#line 75 "tl13.y"
                                                                  {
+                TRACE("ifStatement");
            (yyval.node) = ast_make_if_block((yyvsp[-4].node), (yyvsp[-2].node), (yyvsp[-1].node));
            }
-#line 1223 "tl13.tab.c"
+#line 1247 "tl13.tab.c"
     break;
 
   case 18: /* elseClause: ELSE statementSequence  */
-#line 67 "tl13.y"
+#line 80 "tl13.y"
                                      {
+                TRACE("elseClause");
           (yyval.node) = ast_make_else_clause((yyvsp[0].node));
 
           }
-#line 1232 "tl13.tab.c"
+#line 1257 "tl13.tab.c"
     break;
 
   case 19: /* whileStatement: WHILE expression DO statementSequence END  */
-#line 72 "tl13.y"
+#line 86 "tl13.y"
                                                           {
+                TRACE("whileStatement");
               (yyval.node) = ast_make_while_block((yyvsp[-3].node), (yyvsp[-1].node));
               }
-#line 1240 "tl13.tab.c"
+#line 1266 "tl13.tab.c"
     break;
 
   case 20: /* writeInt: WRITEINT expression  */
-#line 76 "tl13.y"
+#line 91 "tl13.y"
                               {
+                TRACE("writeInt");
         (yyval.node) = ast_make_write_int((yyvsp[0].node));
         }
-#line 1248 "tl13.tab.c"
+#line 1275 "tl13.tab.c"
     break;
 
   case 21: /* expression: simpleExpression  */
-#line 80 "tl13.y"
-                             { (yyval.node) = ast_make_unary_expression((yyvsp[0].node)); }
-#line 1254 "tl13.tab.c"
+#line 96 "tl13.y"
+                             { TRACE("expression_Simple"); (yyval.node) = ast_make_unary_expression((yyvsp[0].node)); }
+#line 1281 "tl13.tab.c"
     break;
 
   case 22: /* expression: simpleExpression OP4 simpleExpression  */
-#line 81 "tl13.y"
+#line 97 "tl13.y"
                                                   {
+                TRACE("expression_Binary");
                 (yyval.node) = ast_make_binary_expression((yyvsp[-2].node), (yyvsp[-1].sval), (yyvsp[0].node));
           }
-#line 1262 "tl13.tab.c"
+#line 1290 "tl13.tab.c"
     break;
 
   case 23: /* simpleExpression: term OP3 term  */
-#line 85 "tl13.y"
+#line 102 "tl13.y"
                                { (yyval.node) = ast_make_binary_simple_expression((yyvsp[-2].node), (yyvsp[-1].sval), (yyvsp[0].node)); }
-#line 1268 "tl13.tab.c"
+#line 1296 "tl13.tab.c"
     break;
 
   case 24: /* simpleExpression: term  */
-#line 86 "tl13.y"
+#line 103 "tl13.y"
                        { (yyval.node) = ast_make_unary_simple_expression((yyvsp[0].node)); }
-#line 1274 "tl13.tab.c"
+#line 1302 "tl13.tab.c"
     break;
 
   case 25: /* term: factor OP2 factor  */
-#line 88 "tl13.y"
+#line 105 "tl13.y"
                         { (yyval.node) = ast_make_binary_term((yyvsp[-2].node), (yyvsp[-1].sval), (yyvsp[0].node));    }
-#line 1280 "tl13.tab.c"
+#line 1308 "tl13.tab.c"
     break;
 
   case 26: /* term: factor  */
-#line 89 "tl13.y"
+#line 106 "tl13.y"
                      {    (yyval.node) = ast_make_unary_term((yyvsp[0].node));             }
-#line 1286 "tl13.tab.c"
+#line 1314 "tl13.tab.c"
     break;
 
   case 27: /* factor: IDENT  */
-#line 91 "tl13.y"
+#line 108 "tl13.y"
               { (yyval.node) = ast_make_factor_ident((yyvsp[0].sval)); }
-#line 1292 "tl13.tab.c"
+#line 1320 "tl13.tab.c"
     break;
 
   case 28: /* factor: NUMBER  */
-#line 92 "tl13.y"
-               { (yyval.node) = ast_make_factor_number((yyvsp[0].ival)); }
-#line 1298 "tl13.tab.c"
+#line 109 "tl13.y"
+               { 
+            (yyval.node) = ast_make_factor_number((yyvsp[0].ival)); }
+#line 1327 "tl13.tab.c"
     break;
 
   case 29: /* factor: BOOLLIT  */
-#line 93 "tl13.y"
+#line 111 "tl13.y"
                 { (yyval.node) = ast_make_factor_boollit((yyvsp[0].bval)); }
-#line 1304 "tl13.tab.c"
+#line 1333 "tl13.tab.c"
     break;
 
   case 30: /* factor: LP expression RP  */
-#line 94 "tl13.y"
+#line 112 "tl13.y"
                          { (yyval.node) = ast_make_factor_parenth_expr((yyvsp[-1].node)); }
-#line 1310 "tl13.tab.c"
+#line 1339 "tl13.tab.c"
     break;
 
 
-#line 1314 "tl13.tab.c"
+#line 1343 "tl13.tab.c"
 
       default: break;
     }
@@ -1503,7 +1532,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 96 "tl13.y"
+#line 114 "tl13.y"
 
 
 int main()

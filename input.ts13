@@ -1,0 +1,7 @@
+program
+   var SMALLER as int ;
+   var BIGGER as int ;
+   var TEMP as bool;
+begin
+   BIGGER := readInt ;
+end

@@ -811,135 +811,140 @@ YY_RULE_SETUP
 case 2:
 YY_RULE_SETUP
 #line 30 "tl13.l"
-{ TAKE_ERROR_TOKEN; yylval.ival = atoi(yytext); DBG(NUMBER);}
+{ TAKE_ERROR_TOKEN; yylval.ival = atoi(yytext); 
+                                if (yylval.ival < 0 || yylval.ival > 2147483647) {
+                                    printf("%s outside legal integer range on line: %d", err_token, line_num);
+                                    exit(-1);
+                                } 
+                                DBG(NUMBER); }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 31 "tl13.l"
+#line 36 "tl13.l"
 { TAKE_ERROR_TOKEN; yylval.bval = strcmp("true", yytext) == 0; DBG(BOOLLIT); }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 32 "tl13.l"
+#line 37 "tl13.l"
 { TAKE_ERROR_TOKEN; yylval.sval = strdup(yytext); DBG(IDENT);}
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 33 "tl13.l"
+#line 38 "tl13.l"
 { TAKE_ERROR_TOKEN; yylval.sval = strdup(yytext); DBG(LP);}
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 34 "tl13.l"
+#line 39 "tl13.l"
 { TAKE_ERROR_TOKEN; yylval.sval = strdup(yytext); DBG(RP);}
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 35 "tl13.l"
+#line 40 "tl13.l"
 { TAKE_ERROR_TOKEN; yylval.sval = strdup(yytext); DBG(ASGN);}
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 36 "tl13.l"
+#line 41 "tl13.l"
 { TAKE_ERROR_TOKEN; yylval.sval = strdup(yytext); DBG(SC);}
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 37 "tl13.l"
+#line 42 "tl13.l"
 { TAKE_ERROR_TOKEN; yylval.sval = strdup(yytext); DBG(OP2);}
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 38 "tl13.l"
+#line 43 "tl13.l"
 { TAKE_ERROR_TOKEN; yylval.sval = strdup(yytext); DBG(OP3);}
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 39 "tl13.l"
+#line 44 "tl13.l"
 { TAKE_ERROR_TOKEN; yylval.sval = strdup(yytext); DBG(OP4);}
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 40 "tl13.l"
+#line 45 "tl13.l"
 { TAKE_ERROR_TOKEN; yylval.sval = strdup(yytext); DBG(IF);}
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 41 "tl13.l"
+#line 46 "tl13.l"
 { TAKE_ERROR_TOKEN; yylval.sval = strdup(yytext); DBG(THEN);}
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 42 "tl13.l"
+#line 47 "tl13.l"
 { TAKE_ERROR_TOKEN; yylval.sval = strdup(yytext); DBG(ELSE);}
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 43 "tl13.l"
+#line 48 "tl13.l"
 { TAKE_ERROR_TOKEN; yylval.sval = strdup(yytext); DBG(MYBEGIN);}
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 44 "tl13.l"
+#line 49 "tl13.l"
 { TAKE_ERROR_TOKEN; yylval.sval = strdup(yytext); DBG(END);}
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 45 "tl13.l"
+#line 50 "tl13.l"
 { TAKE_ERROR_TOKEN; yylval.sval = strdup(yytext); DBG(WHILE);}
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 46 "tl13.l"
+#line 51 "tl13.l"
 { TAKE_ERROR_TOKEN; yylval.sval = strdup(yytext); DBG(DO);}
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 47 "tl13.l"
+#line 52 "tl13.l"
 { TAKE_ERROR_TOKEN; yylval.sval = strdup(yytext); DBG(PROGRAM);}
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 48 "tl13.l"
+#line 53 "tl13.l"
 { TAKE_ERROR_TOKEN; yylval.sval = strdup(yytext); DBG(VAR);}
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 49 "tl13.l"
+#line 54 "tl13.l"
 { TAKE_ERROR_TOKEN; yylval.sval = strdup(yytext); DBG(AS);}
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 50 "tl13.l"
+#line 55 "tl13.l"
 { TAKE_ERROR_TOKEN; yylval.sval = strdup(yytext); DBG(INT);}
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 51 "tl13.l"
+#line 56 "tl13.l"
 { TAKE_ERROR_TOKEN; yylval.sval = strdup(yytext); DBG(BOOL);}
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 52 "tl13.l"
+#line 57 "tl13.l"
 { TAKE_ERROR_TOKEN; yylval.sval = strdup(yytext); DBG(WRITEINT);}
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 53 "tl13.l"
+#line 58 "tl13.l"
 { TAKE_ERROR_TOKEN; yylval.sval = strdup(yytext); DBG(READINT);}
 	YY_BREAK
 case 26:
 /* rule 26 can match eol */
 YY_RULE_SETUP
-#line 54 "tl13.l"
+#line 59 "tl13.l"
 { line_num++; }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 56 "tl13.l"
+#line 61 "tl13.l"
 ECHO;
 	YY_BREAK
-#line 942 "lex.yy.c"
+#line 947 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1944,7 +1949,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 56 "tl13.l"
+#line 61 "tl13.l"
 
 
 

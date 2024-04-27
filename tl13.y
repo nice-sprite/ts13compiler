@@ -9,6 +9,14 @@ void yyerror(const char* s);
 extern int line_num;
 extern char* err_token;
 
+#define TRACE_AST 1
+
+#if TRACE_AST == 1
+    #define TRACE(where) printf("%s\n", where);
+#else
+    #define TRACE(where) 
+#endif
+
 %}
 
 %union {
@@ -28,57 +36,66 @@ extern char* err_token;
 %%
 
 program: | PROGRAM declarations MYBEGIN statementSequence END {
-        ASTNode* current_decl = $2;
-        while(current_decl) {
-            printf("%d %s\n", current_decl->declaration.datatype, current_decl->declaration.ident);
-            current_decl = current_decl->declaration.next;
+        if (ast_generate_code($2, $4)) {
+            printf("\nSuccess!\n");
+        } else {
+            printf("\nThere was an error\n");
         }
-        printf("\nSuccess!\n");
     };
 
-declarations: | VAR IDENT AS type SC declarations 
+declarations: { TRACE("declarations_Empty"); }
+    | VAR IDENT AS type SC declarations 
     {
+        TRACE("declarations");
         $$ = ast_make_declaration($2, $4, $6);
     };
 
-type: INT { $$ = ast_make_type(DT_INT); }
-    | BOOL { $$ = ast_make_type(DT_BOOL); }
+type: INT { $$ = ast_make_type(DT_INT); TRACE("type int"); }
+    | BOOL { $$ = ast_make_type(DT_BOOL); TRACE("type int"); }
 
-statementSequence: | statement SC statementSequence { 
-                 $$ = ast_make_statement_seq($1, $3);
+statementSequence: { TRACE("statementSequence_Empty");$$ = ast_make_statement_seq(0, 0); } | statement SC statementSequence { 
+                $$ = ast_make_statement_seq($1, $3);
+                TRACE("StatementSequence");
                  };
 
-statement: assignment {         $$ = ast_make_statement(ST_ASSIGN, $1); }
-         | ifStatement {        $$ = ast_make_statement(ST_IFBLOCK, $1); } 
-         | whileStatement {     $$ = ast_make_statement(ST_WHILEBLOCK, $1); } 
-         | writeInt {           $$ = ast_make_statement(ST_WRITEINT, $1); }
+statement: assignment {      TRACE("statement_Assignment");   $$ = ast_make_statement(ST_ASSIGN, $1); }
+         | ifStatement {     TRACE("statement_IfStatement");   $$ = ast_make_statement(ST_IFBLOCK, $1); } 
+         | whileStatement {  TRACE("statement_WhileStatement");   $$ = ast_make_statement(ST_WHILEBLOCK, $1); } 
+         | writeInt {        TRACE("statement_WriteInt");   $$ = ast_make_statement(ST_WRITEINT, $1); }
 
 assignment: IDENT ASGN expression { 
-              $$ = ast_make_assignment_expression($1, $3);
-          } 
+        TRACE("assignment_Expression");
+        $$ = ast_make_assignment_expression($1, $3);
+      } 
           | IDENT ASGN READINT { 
+                TRACE("assignment_ReadInt");
               $$ = ast_make_assignment_readint($1);
           }
 
 ifStatement: IF expression THEN statementSequence elseClause END {
+                TRACE("ifStatement");
            $$ = ast_make_if_block($2, $4, $5);
            }
 
 elseClause: | ELSE statementSequence {
+                TRACE("elseClause");
           $$ = ast_make_else_clause($2);
 
           }
 
 whileStatement: WHILE expression DO statementSequence END {
+                TRACE("whileStatement");
               $$ = ast_make_while_block($2, $4);
               }
 
 writeInt: WRITEINT expression {
+                TRACE("writeInt");
         $$ = ast_make_write_int($2);
         }
 
-expression: simpleExpression { $$ = ast_make_unary_expression($1); }
+expression: simpleExpression { TRACE("expression_Simple"); $$ = ast_make_unary_expression($1); }
           | simpleExpression OP4 simpleExpression {
+                TRACE("expression_Binary");
                 $$ = ast_make_binary_expression($1, $2, $3);
           }
 
@@ -89,7 +106,8 @@ term: factor OP2 factor { $$ = ast_make_binary_term($1, $2, $3);    }
             | factor {    $$ = ast_make_unary_term($1);             }
 
 factor: IDENT { $$ = ast_make_factor_ident($1); } 
-      | NUMBER { $$ = ast_make_factor_number($1); }
+      | NUMBER { 
+            $$ = ast_make_factor_number($1); }
       | BOOLLIT { $$ = ast_make_factor_boollit($1); }
       | LP expression RP { $$ = ast_make_factor_parenth_expr($2); }
 

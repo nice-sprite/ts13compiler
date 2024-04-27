@@ -1,0 +1,16 @@
+program test10;
+
+var
+
+x : integer;
+
+y : real;
+
+begin
+
+writeln(x);
+
+writeln(y);
+
+end.
+
