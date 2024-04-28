@@ -1,0 +1,14 @@
+program
+    var INPUT1 as int;
+    var INPUT2 as int;
+begin
+    INPUT1 := readInt ;
+    INPUT2 := readInt ;
+
+    if INPUT1 > INPUT2 then
+        writeInt INPUT1;    
+    end ;
+    if INPUT2 > INPUT2 then
+        writeInt INPUT2;
+    end;
+end

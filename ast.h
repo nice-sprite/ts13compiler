@@ -430,7 +430,7 @@ ASTNode* ast_make_binary_term(ASTNode* factor1, const char* op2_lexeme, ASTNode*
         op2 = OP_MUL;
     } else if(!strcmp(op2_lexeme, "/")) {
         op2 = OP_DIV;
-    } else if (!strcmp(op2_lexeme, "%")) {
+    } else if (!strcmp(op2_lexeme, "mod")) {
         op2 = OP_MOD;
     }
     snode->term.op2 = op2;
@@ -669,9 +669,15 @@ char* gen(ASTNode* stmts, int tab_depth) {
             }
             return fmt("%s = %s;", s->assignment.ident, gen( s->assignment.expr, 0));
         case AT_READINT:
-            if (!sym_lookup(s->assignment.ident)) {
+            SymbolEntry *e = 0; 
+            if (!(e = sym_lookup(s->assignment.ident))) {
                 printf("Use of undeclared variable: %s", s->factor.ident);
                 exit(-1);
+            } else {
+                if (e->data_type != DT_INT) {
+                    printf("readInt operand %s must be of type int, is currently: %s", s->factor.ident, datatype_as_str(e->data_type));
+                    exit(-1);
+                }
             }
             return fmt("scanf(\"%%d\", &%s);\n", s->assignment.ident);
         case ST_ASSIGN:
@@ -683,13 +689,26 @@ char* gen(ASTNode* stmts, int tab_depth) {
         case ST_WRITEINT:
             return fmt("%s%s", tabs(tab_depth), gen( s->statement.writeInt, tab_depth));
         case IF_BLOCK:
-            return fmt("if (%s) {\n%s%s}", gen( s->if_block.expr, 0), gen( s->if_block.statement_sequence, tab_depth+1), tabs(tab_depth));
+            if (s->if_block.else_clause) {
+                return fmt("if (%s) {\n%s%s}\n%selse {\n%s%s}", 
+                          gen( s->if_block.expr, 0), 
+                          gen( s->if_block.statement_sequence, tab_depth+1), 
+                          tabs(tab_depth), 
+                          tabs(tab_depth),
+                          gen(s->if_block.else_clause, tab_depth), 
+                          tabs(tab_depth));
+            } else {
+                return fmt("if (%s) {\n%s%s}\n", 
+                          gen( s->if_block.expr, 0), 
+                          gen( s->if_block.statement_sequence, tab_depth+1), 
+                          tabs(tab_depth));
+            }
         case ELSE_CLAUSE:
             return fmt("%s", gen( s->else_block.statements, tab_depth+1));
         case WHILE_BLOCK:
             return fmt("while (%s) {\n%s%s}", gen( s->while_block.expr, 0), gen( s->while_block.statements, tab_depth+1), tabs(tab_depth));
         case WRITE_INT:
-            return fmt("printf(\"%%d\", %s);", gen( s->write_int.expr, 0));
+            return fmt("printf(\"%%d\\n\", %s);", gen( s->write_int.expr, 0));
         case STATEMENT_SEQUENCE:
             char* f = (char*)"";
             ASTNode* current_statement = s;
@@ -716,7 +735,6 @@ int ast_generate_code(ASTNode* declarations, ASTNode* statement_sequence) {
     TranspilerOutput t = tp_create("test.c");
 
     TP_WRITE(t, "#include <stdio.h>\n");
-    TP_WRITE(t, "#include <stdlib.h>\n");
     TP_WRITE(t, "typedef char bool;\n");
 
     TP_WRITE(t, "int main() {\n");

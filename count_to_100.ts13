@@ -1,0 +1,14 @@
+
+program
+    var INPUT1 as int;
+    var COUNTER as int;
+begin
+    INPUT1 := readInt;
+    COUNTER := 0;
+    while COUNTER < INPUT1 do
+        COUNTER := COUNTER + 1;
+        writeInt COUNTER;
+    end;
+
+
+end

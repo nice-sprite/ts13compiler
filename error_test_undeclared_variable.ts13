@@ -1,10 +1,12 @@
 program
-   var SMALLER as int ;
-   var BIGGER as int ;
-   var TEMP as bool;
+   var SMALLER as int;
+   var BIGGER as int;
+   var TEMP as int;
+   var TEMP1 as int;
 begin
    BIGGER := readInt ;
    SMALLER := readInt ;
+    INPUTA := readInt;
 
    if SMALLER > BIGGER then
       TEMP := SMALLER ;

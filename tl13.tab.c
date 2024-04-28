@@ -1246,14 +1246,20 @@ yyreduce:
 #line 1247 "tl13.tab.c"
     break;
 
+  case 17: /* elseClause: %empty  */
+#line 80 "tl13.y"
+            {(yyval.node) = 0;}
+#line 1253 "tl13.tab.c"
+    break;
+
   case 18: /* elseClause: ELSE statementSequence  */
 #line 80 "tl13.y"
-                                     {
+                                               {
                 TRACE("elseClause");
           (yyval.node) = ast_make_else_clause((yyvsp[0].node));
 
           }
-#line 1257 "tl13.tab.c"
+#line 1263 "tl13.tab.c"
     break;
 
   case 19: /* whileStatement: WHILE expression DO statementSequence END  */
@@ -1262,7 +1268,7 @@ yyreduce:
                 TRACE("whileStatement");
               (yyval.node) = ast_make_while_block((yyvsp[-3].node), (yyvsp[-1].node));
               }
-#line 1266 "tl13.tab.c"
+#line 1272 "tl13.tab.c"
     break;
 
   case 20: /* writeInt: WRITEINT expression  */
@@ -1271,13 +1277,13 @@ yyreduce:
                 TRACE("writeInt");
         (yyval.node) = ast_make_write_int((yyvsp[0].node));
         }
-#line 1275 "tl13.tab.c"
+#line 1281 "tl13.tab.c"
     break;
 
   case 21: /* expression: simpleExpression  */
 #line 96 "tl13.y"
                              { TRACE("expression_Simple"); (yyval.node) = ast_make_unary_expression((yyvsp[0].node)); }
-#line 1281 "tl13.tab.c"
+#line 1287 "tl13.tab.c"
     break;
 
   case 22: /* expression: simpleExpression OP4 simpleExpression  */
@@ -1286,60 +1292,60 @@ yyreduce:
                 TRACE("expression_Binary");
                 (yyval.node) = ast_make_binary_expression((yyvsp[-2].node), (yyvsp[-1].sval), (yyvsp[0].node));
           }
-#line 1290 "tl13.tab.c"
+#line 1296 "tl13.tab.c"
     break;
 
   case 23: /* simpleExpression: term OP3 term  */
 #line 102 "tl13.y"
                                { (yyval.node) = ast_make_binary_simple_expression((yyvsp[-2].node), (yyvsp[-1].sval), (yyvsp[0].node)); }
-#line 1296 "tl13.tab.c"
+#line 1302 "tl13.tab.c"
     break;
 
   case 24: /* simpleExpression: term  */
 #line 103 "tl13.y"
                        { (yyval.node) = ast_make_unary_simple_expression((yyvsp[0].node)); }
-#line 1302 "tl13.tab.c"
+#line 1308 "tl13.tab.c"
     break;
 
   case 25: /* term: factor OP2 factor  */
 #line 105 "tl13.y"
                         { (yyval.node) = ast_make_binary_term((yyvsp[-2].node), (yyvsp[-1].sval), (yyvsp[0].node));    }
-#line 1308 "tl13.tab.c"
+#line 1314 "tl13.tab.c"
     break;
 
   case 26: /* term: factor  */
 #line 106 "tl13.y"
                      {    (yyval.node) = ast_make_unary_term((yyvsp[0].node));             }
-#line 1314 "tl13.tab.c"
+#line 1320 "tl13.tab.c"
     break;
 
   case 27: /* factor: IDENT  */
 #line 108 "tl13.y"
               { (yyval.node) = ast_make_factor_ident((yyvsp[0].sval)); }
-#line 1320 "tl13.tab.c"
+#line 1326 "tl13.tab.c"
     break;
 
   case 28: /* factor: NUMBER  */
 #line 109 "tl13.y"
                { 
             (yyval.node) = ast_make_factor_number((yyvsp[0].ival)); }
-#line 1327 "tl13.tab.c"
+#line 1333 "tl13.tab.c"
     break;
 
   case 29: /* factor: BOOLLIT  */
 #line 111 "tl13.y"
                 { (yyval.node) = ast_make_factor_boollit((yyvsp[0].bval)); }
-#line 1333 "tl13.tab.c"
+#line 1339 "tl13.tab.c"
     break;
 
   case 30: /* factor: LP expression RP  */
 #line 112 "tl13.y"
                          { (yyval.node) = ast_make_factor_parenth_expr((yyvsp[-1].node)); }
-#line 1339 "tl13.tab.c"
+#line 1345 "tl13.tab.c"
     break;
 
 
-#line 1343 "tl13.tab.c"
+#line 1349 "tl13.tab.c"
 
       default: break;
     }

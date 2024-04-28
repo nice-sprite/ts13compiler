@@ -77,7 +77,7 @@ ifStatement: IF expression THEN statementSequence elseClause END {
            $$ = ast_make_if_block($2, $4, $5);
            }
 
-elseClause: | ELSE statementSequence {
+elseClause: {$$ = 0;} | ELSE statementSequence {
                 TRACE("elseClause");
           $$ = ast_make_else_clause($2);
 
